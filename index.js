@@ -7,6 +7,7 @@ const errorhandler = require("errorhandler");
 // добавить логгер, https, cors(?)
 const https = require("https");
 const fs = require("fs");
+const logger = require("./lib/logger");
 
 const app = express();
 
@@ -20,15 +21,6 @@ const isProduction = process.env.NODE_ENV === "development";
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.use(
-  session({
-    secret: process.env.SECRET,
-    cookit: { maxAge: 60 * 24 * 60 * 60 * 1000 },
-    resave: false,
-    saveUninitialized: false
-  })
-);
-
 if (!isProduction) {
   app.use(errorhandler());
 }
@@ -39,6 +31,7 @@ app.use(require("./routes"));
 app.use((req, res, next) => {
   let err = new Error("Not Found");
   err.status = 404;
+  logger.error(err);
   next(err);
 });
 

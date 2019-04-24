@@ -12,7 +12,6 @@ router.post("/login", (req, res, next) => {
   }
 
   passport.authenticate("local", { session: false }, (err, user, info) => {
-    console.log("auth_user: ", user);
     if (err) {
       return next(err);
     }
@@ -47,7 +46,7 @@ function toAuthJSON(user) {
 function generateJWT(user) {
   let today = new Date();
   let exp = new Date(today);
-  exp.setDate(today.getDate() + 60);
+  exp.setDate(today.getDate() + 20);
 
   return jwt.sign(
     {
