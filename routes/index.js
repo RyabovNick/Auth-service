@@ -33,5 +33,6 @@ router.use(
 );
 
 router.use("/api", require("./auth"));
+router.use("/api", require("./secureRoute"));
 
 module.exports = router;

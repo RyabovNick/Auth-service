@@ -5,7 +5,6 @@ const session = require("express-session");
 const router = express.Router();
 const errorhandler = require("errorhandler");
 // добавить логгер, https, cors(?)
-require("./config/passport");
 const https = require("https");
 const fs = require("fs");
 
@@ -33,6 +32,9 @@ app.use(
 if (!isProduction) {
   app.use(errorhandler());
 }
+
+require("./config/passport");
+app.use(require("./routes"));
 
 app.use((req, res, next) => {
   let err = new Error("Not Found");
@@ -67,11 +69,9 @@ if (!isProduction) {
   });
 }
 
-app.use(require("./routes"));
-
 // http
-var server = app.listen(process.env.PORT || 3000, function() {
-  // console.log('Listening on port ' + server.address().port);
+let server = app.listen(process.env.PORT || 3000, function() {
+  console.log("Listening on port " + server.address().port);
 });
 
 // https.createServer(sslOptions, app).listen(process.env.PORT || 3000, () => {
