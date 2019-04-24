@@ -33,6 +33,6 @@ router.use(
 );
 
 router.use("/api", require("./auth"));
-router.use("/api", require("./secureRoute"));
+router.use("/api", require("./tokenValidation"));
 
 module.exports = router;

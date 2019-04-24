@@ -1,7 +1,7 @@
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const ldap = require("ldapjs");
-const logger = require("../lib/logger");
+const { logger, authLogger } = require("../lib/logger");
 
 const url = "ldap://free.uni-dubna.ru";
 const domain = "free.uni-dubna.ru";
@@ -51,6 +51,7 @@ passport.use(
           });
         }
       } else {
+        authLogger.log("success", "successAuth", { username });
         let options = {
           filter: `(sAMAccountName=${username})`,
           scope: "sub", //what is it?
@@ -62,7 +63,6 @@ passport.use(
           ]
         };
 
-        console.log("suffix: ", suffix);
         client.search(suffix, options, (err, res) => {
           if (err) {
             logger.log("error", "LdapSearchError", { username, options });
@@ -86,10 +86,7 @@ passport.use(
 
             done(null, user);
           });
-          res.on("searchReference", referral => {
-            // what is it?
-            console.log("referral: " + referral.uris.join());
-          });
+          res.on("searchReference", referral => {});
           res.on("error", err => {
             logger.log("error", "LdapAuthError", { username, err });
             done(null, false, {
@@ -100,7 +97,9 @@ passport.use(
             // what is it?
             client.unbind(err => {
               // handle error here
-              logger.log("error", "LdapUnbindError", { username, err });
+              if (err) {
+                logger.log("error", "LdapUnbindError", { username, err });
+              }
             });
           });
         });

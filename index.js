@@ -4,12 +4,15 @@ const bodyParser = require("body-parser");
 const session = require("express-session");
 const router = express.Router();
 const errorhandler = require("errorhandler");
-// добавить логгер, https, cors(?)
 const https = require("https");
 const fs = require("fs");
 const logger = require("./lib/logger");
+const helmet = require("helmet");
+const cors = require("cors");
 
 const app = express();
+app.use(helmet());
+app.use(cors());
 
 const isProduction = process.env.NODE_ENV === "development";
 
