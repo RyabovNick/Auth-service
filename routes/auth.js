@@ -1,17 +1,17 @@
-const router = require("express").Router();
-const passport = require("passport");
-const crypto = require("crypto");
-const jwt = require("jsonwebtoken");
+const router = require('express').Router();
+const passport = require('passport');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const secret = process.env.SECRET_JWT;
 
-router.post("/login", (req, res, next) => {
+router.post('/login', (req, res, next) => {
   if (!req.body.username || !req.body.password) {
     return res
       .status(400)
-      .json({ msg: "Логин или пароль не может быть пустым" });
+      .json({ msg: 'Логин или пароль не может быть пустым' });
   }
 
-  passport.authenticate("local", { session: false }, (err, user, info) => {
+  passport.authenticate('local', { session: false }, (err, user, info) => {
     if (err) {
       return next(err);
     }
@@ -19,7 +19,7 @@ router.post("/login", (req, res, next) => {
     if (user) {
       return res.json({ user: toAuthJSON(user) });
     } else {
-      return res.status(422).json(info);
+      return res.status(400).json(info);
     }
   })(req, res, next);
 });
@@ -35,7 +35,7 @@ function toAuthJSON(user) {
     role: user.role,
     caf: user.caf,
     oneCcode: user.oneCcode,
-    token: generateJWT(user)
+    token: generateJWT(user),
   };
 }
 
@@ -55,9 +55,9 @@ function generateJWT(user) {
       role: user.role,
       caf: user.caf,
       oneCcode: user.oneCcode,
-      exp: parseInt(exp.getTime() / 1000)
+      exp: parseInt(exp.getTime() / 1000),
     },
-    secret
+    secret,
   );
 }
 
