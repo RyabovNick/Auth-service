@@ -1,11 +1,11 @@
-const passport = require("passport");
-const LocalStrategy = require("passport-local").Strategy;
-const ldap = require("ldapjs");
-const { logger, authLogger } = require("../lib/logger");
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const ldap = require('ldapjs');
+const { logger, authLogger } = require('../lib/logger');
 
-const url = "ldap://free.uni-dubna.ru";
-const domain = "free.uni-dubna.ru";
-const suffix = "dc=" + domain.replace(/\./g, ",dc=");
+const url = 'ldap://10.210.50.72';
+const domain = 'free.uni-dubna.ru';
+const suffix = 'dc=' + domain.replace(/\./g, ',dc=');
 
 passport.use(
   new LocalStrategy((username, password, done) => {
@@ -17,68 +17,68 @@ passport.use(
       reconnect: {
         initialDelay: 100,
         maxDelay: 1000,
-        failAfter: 10
-      }
+        failAfter: 10,
+      },
     });
 
-    client.on("error", err => {
+    client.on('error', err => {
       // handle error here
-      logger("error", err);
-      console.log("err1: ", err);
+      console.log('err1: ', err);
+      logger.log('error', 'ldapCreateClientError', { err });
     });
 
-    client.on("connectTimeout", err => {
+    client.on('connectTimeout', err => {
       // handler here
       // The ldap connection attempt has been timed out...
-      logger("error", err);
-      console.log("err2: ", err);
+      console.log('err2: ', err);
+      logger.log('error', 'ldapConnectTimeoutError', { err });
     });
 
-    client.on("connect", function() {
+    client.on('connect', function() {
       // The ldap connection is ready to use.
       // Place your subsequent ldapjs code here...
     });
 
     client.bind(`${username}@${domain}`, password, err => {
       if (err != null) {
-        if (err.name === "InvalidCredentialsError") {
-          logger.log("error", "InvalidCredentialsError", { username });
-          done(null, false, { msg: "Неверный логин или пароль" });
+        if (err.name === 'InvalidCredentialsError') {
+          logger.log('error', 'InvalidCredentialsError', { username });
+          done(null, false, { msg: 'Неверный логин или пароль' });
         } else {
-          logger.log("error", "LdapAuthError", { username });
+          logger.log('error', 'LdapAuthError', { username });
           done(null, false, {
-            msg: "Произошла ошибка, пожалуйста, попробуйте позднее"
+            msg: 'Произошла ошибка, пожалуйста, попробуйте позднее',
           });
         }
       } else {
-        authLogger.log("success", "successAuth", { username });
+        authLogger.log('success', 'successAuth', { username });
         let options = {
           filter: `(sAMAccountName=${username})`,
-          scope: "sub", //what is it?
+          scope: 'sub', //what is it?
           attributes: [
-            "cn", //ФИО
-            "memberOf", //Группа
-            "department", //Кафедра (но не для всех)
-            "employeeNumber" //код 1С
-          ]
+            'cn', //ФИО
+            'memberOf', //Группа
+            'department', //Кафедра (но не для всех)
+            'employeeNumber', //код 1С
+          ],
         };
 
         client.search(suffix, options, (err, res) => {
           if (err) {
-            logger.log("error", "LdapSearchError", { username, options });
+            logger.log('error', 'LdapSearchError', { username, options });
             done(null, false, {
-              msg: "Произошла ошибка, пожалуйста, попробуйте позднее"
+              msg: 'Произошла ошибка, пожалуйста, попробуйте позднее',
             });
           }
 
-          res.on("searchEntry", entry => {
+          res.on('searchEntry', entry => {
             let user = {};
             user.username = username;
             user.fio = entry.object.cn;
 
             let patt = /CN=[a-zA-Z]+/g;
             let roleObject = entry.object.memberOf.match(patt);
-            let role = roleObject[0].replace("CN=", "");
+            let role = roleObject[0].replace('CN=', '');
             user.role = role;
 
             user.caf = entry.object.department;
@@ -86,26 +86,26 @@ passport.use(
 
             done(null, user);
           });
-          res.on("searchReference", referral => {});
-          res.on("error", err => {
-            logger.log("error", "LdapAuthError", { username, err });
+          res.on('searchReference', referral => {});
+          res.on('error', err => {
+            logger.log('error', 'LdapAuthError', { username, err });
             done(null, false, {
-              msg: "Произошла ошибка, пожалуйста, попробуйте позднее"
+              msg: 'Произошла ошибка, пожалуйста, попробуйте позднее',
             });
           });
-          res.on("end", result => {
+          res.on('end', result => {
             // what is it?
             client.unbind(err => {
               // handle error here
               if (err) {
-                logger.log("error", "LdapUnbindError", { username, err });
+                logger.log('error', 'LdapUnbindError', { username, err });
               }
             });
           });
         });
       }
     });
-  })
+  }),
 );
 
 // const student = {

@@ -28,7 +28,7 @@ app.use(require('./routes'));
 app.use((req, res, next) => {
   let err = new Error('Not Found');
   err.status = 404;
-  logger.error(err);
+  logger.log('error', 'Error Not Found', { err });
   next(err);
 });
 
