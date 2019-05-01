@@ -61,3 +61,5 @@ typings/
 .next
 
 .pfx
+server.crt
+server.key

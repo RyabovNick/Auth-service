@@ -66,9 +66,13 @@ if (process.env.NODE_ENV === 'development') {
   });
 } else {
   const sslOptions = {
-    pfx: fs.readFileSync('./sslcert.pfx'),
-    passphrase: process.env.SSL_PASS,
+    key: fs.readFileSync('server.key'),
+    cert: fs.readFileSync('server.crt'),
   };
+  // const sslOptions = {
+  //   pfx: fs.readFileSync('./sslcert.pfx'),
+  //   passphrase: process.env.SSL_PASS,
+  // };
 
   https.createServer(sslOptions, app).listen(process.env.PORT || 3000, () => {
     console.log(`Listening on ${process.env.PORT}`);
