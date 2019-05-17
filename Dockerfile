@@ -13,4 +13,4 @@ RUN npm install pm2 -g
 
 EXPOSE 3000
 
-CMD [ "node", "index.js" ]
+CMD [ "pm2-runtime", "index.js" ]

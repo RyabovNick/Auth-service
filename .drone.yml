@@ -20,7 +20,7 @@ steps:
       - name: docker
         path: /var/run/docker.sock
       - name: auth_service_logs
-        path: /app/logs
+        path: /logs
     environment:
       NODE_ENV:
         from_secret: NODE_ENV
