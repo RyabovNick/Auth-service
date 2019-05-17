@@ -116,9 +116,10 @@
 kind: pipeline
 name: default
 
-#
+# клонирует репозиторий и каждый шаг имеет к нему доступ (клонируется 1  раз)
 
 steps:
+  # каждый шаг в контейнере
   - name: test
     image: node:10-alpine # docker-hub образ, обязателен на каждом этапе
     commands:
@@ -131,10 +132,12 @@ steps:
       - push
       - pull-request
 
+  # deploy на том же сервере
   - name: deploy
     image: docker
+    # для доступа к docker на сервере
     volumes:
-      - name: docker
+      - name: docker # это название глобального volumes (в самом низу файла)
         path: /var/run/docker.sock
     environment:
       NODE_ENV:
@@ -174,7 +177,8 @@ steps:
         {{/success}}
     when:
       status: [success, failure]
-
+# глобальные volumes (global_volume:container_folder)
+# /var/run/docker.sock:/var/run/docker.sock
 volumes:
   - name: docker
     host:

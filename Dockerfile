@@ -3,11 +3,11 @@ FROM node:10-alpine
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
 ENV PATH=$PATH:/home/node/.npm-global/bin
 
-RUN mkdir -p /home/node/auth-service && chown -R node:node /home/node/auth-service
+# RUN mkdir -p /home/node/auth-service && chown -R node:node /home/node/auth-service
 
 WORKDIR /home/node/auth-service
 
-USER node
+# USER node
 
 ADD . /home/node/auth-service
 
