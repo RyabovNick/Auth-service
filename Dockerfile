@@ -7,8 +7,7 @@ WORKDIR /app
 
 USER node
 
-ADD index.js /app/
-ADD node_modules /app/node_modules
+ADD . /app/
 
 RUN npm install pm2 -g
 
