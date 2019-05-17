@@ -5,7 +5,7 @@ const router = express.Router();
 const errorhandler = require('errorhandler');
 const https = require('https');
 const fs = require('fs');
-const logger = require('./lib/logger');
+// const logger = require('./lib/logger'); err? FIXME
 const helmet = require('helmet');
 const cors = require('cors');
 
@@ -28,7 +28,7 @@ app.use(require('./routes'));
 app.use((req, res, next) => {
   let err = new Error('Not Found');
   err.status = 404;
-  logger.log('error', 'Error Not Found', { err });
+  // logger.log('error', 'Error Not Found', { err });
   next(err);
 });
 
