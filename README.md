@@ -139,6 +139,8 @@ steps:
     volumes:
       - name: docker # это название глобального volumes (в самом низу файла)
         path: /var/run/docker.sock
+    # env из хранилища drone (можно добавить через граф. интерфейс на сайте)
+    # где крутится drone
     environment:
       NODE_ENV:
         from_secret: NODE_ENV
@@ -148,16 +150,22 @@ steps:
         from_secret: SECRET_JWT
       PORT: 3000
     settings:
+      # для того, чтобы можно было использовать в commands $NODE_ENV
       build_args_from_env:
       - NODE_ENV
       - SECRET
       - SECRET_JWT
       - PORT
+    # остановка старого контейнера, его удаление (если нет, то true вернуть)
+    # создание нового build (из Dockerfile)
+    # запуск контейнера с volume (для логов), env параметрами
+    # На порту 7445 и с названием auth_service (7445 порт даём nginx и само приложение с ssl на 8445)
     commands:
       - docker container stop auth_service || true && docker rm auth_service || true
       - docker build -t nick/auth_service .
-      - docker run -v /home/auth_service_logs:/home/node/logs -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -p 8445:3000 -d --name=auth_service nick/auth_service
+      - docker run -v /home/auth_service_logs:/home/node/logs -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -p 7445:3000 -d --name=auth_service nick/auth_service
 
+  # уведомления об успешном / неуспешно билде в телеге
   - name: telegram
     image: appleboy/drone-telegram:latest
     settings:
@@ -183,4 +191,31 @@ volumes:
   - name: docker
     host:
       path: /var/run/docker.sock
+```
+
+```Dockerfile
+FROM node:10-alpine
+# для доступа не руту к global
+ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
+ENV PATH=$PATH:/home/node/.npm-global/bin
+# Тут надо пофиксить, чтобы запускать приложение не от рута (FIXME)
+# RUN mkdir -p /home/node/auth-service && chown -R node:node /home/node/auth-service
+
+WORKDIR /home/node/auth-service
+
+# USER node
+# https://github.com/nodejs/docker-node/issues/740
+
+# копируем всё из директории, где Dockerfile в auth-service
+ADD . /home/node/auth-service
+
+RUN mkdir /home/node/auth-service/logs
+RUN chmod 755 /home/node/auth-service/logs
+# Запускаем приложение через pm2
+RUN npm install pm2 -g
+
+# Всё это на 3000 порту в контейнере
+EXPOSE 3000
+# Запускаем pm2
+CMD [ "pm2-runtime", "index.js" ]
 ```

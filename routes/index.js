@@ -6,9 +6,6 @@ const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
 
-console.log(path.join(__dirname, './logs/access-error.log'));
-console.log(path.join(__dirname, '../logs/access-error.log'));
-
 router.use(
   morgan(
     ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms',
@@ -31,12 +28,9 @@ router.use(
   morgan(
     ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms',
     {
-      stream: fs.createWriteStream(
-        path.join(__dirname, '../logs/access-error.log'),
-        {
-          flags: 'a',
-        },
-      ),
+      stream: fs.createWriteStream(path.join(__dirname, '../logs/access.log'), {
+        flags: 'a',
+      }),
     },
   ),
 );

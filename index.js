@@ -9,8 +9,6 @@ const { logger } = require('./lib/logger');
 const helmet = require('helmet');
 const cors = require('cors');
 
-console.log(process.env);
-
 const app = express();
 app.use(helmet());
 app.use(cors());

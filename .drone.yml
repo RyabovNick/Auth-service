@@ -36,7 +36,7 @@ steps:
     commands:
       - docker container stop auth_service || true && docker rm auth_service || true
       - docker build -t nick/auth_service .
-      - docker run -v /home/auth_service_logs:/home/node/auth-service/logs -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -p 8445:3000 -d --name=auth_service nick/auth_service
+      - docker run -v /home/auth_service_logs:/home/node/auth-service/logs -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -p 7445:3000 -d --name=auth_service nick/auth_service
 
   - name: telegram
     image: appleboy/drone-telegram:latest
