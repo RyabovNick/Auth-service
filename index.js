@@ -66,8 +66,8 @@ if (process.env.NODE_ENV === 'development') {
   });
 } else {
   const sslOptions = {
-    key: fs.readFileSync('server.key'),
-    cert: fs.readFileSync('server.crt'),
+    key: fs.readFileSync('./ssl/server.key'),
+    cert: fs.readFileSync('./ssl/server.cer'),
   };
   // const sslOptions = {
   //   pfx: fs.readFileSync('./sslcert.pfx'),
