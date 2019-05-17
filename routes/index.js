@@ -6,6 +6,9 @@ const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
 
+console.log(path.join(__dirname, './logs/access-error.log'));
+console.log(path.join(__dirname, '../logs/access-error.log'));
+
 router.use(
   morgan(
     ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms',
