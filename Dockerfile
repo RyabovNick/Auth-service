@@ -7,10 +7,11 @@ WORKDIR /app
 
 USER node
 
+RUN npm install pm2 -g
+
 ADD index.js /app/
 ADD node_modules /app/node_modules
 
-RUN npm install pm2 -g
 
 EXPOSE 3000
 

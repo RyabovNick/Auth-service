@@ -2,17 +2,17 @@ kind: pipeline
 name: default
 
 steps:
-  # - name: test
-  #   image: node:10-alpine
-  #   commands:
-  #     - npm install
-  #     - npm run test
-  #   when:
-  #   branch:
-  #     - master
-  #   event:
-  #     - push
-  #     - pull-request
+  - name: test
+    image: node:10-alpine
+    commands:
+      - npm install
+      # - npm run test
+    when:
+    branch:
+      - master
+    event:
+      - push
+      - pull-request
 
   - name: deploy
     image: docker
