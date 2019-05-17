@@ -9,6 +9,8 @@ USER node
 
 ADD . /home/node/
 
+RUN mkdir /home/node/logs
+RUN chown node /home/node/logs
 RUN npm install pm2 -g
 
 EXPOSE 3000

@@ -109,3 +109,72 @@
 ## ldapjs
 
 Стоит последить. Вроде всё ок, но. https://github.com/joyent/node-ldapjs/issues/483
+
+## drone.io
+
+```yml
+kind: pipeline
+name: default
+
+steps:
+  - name: test
+    image: node:10-alpine
+    commands:
+      - npm install
+      # - npm run test
+    when:
+    branch:
+      - master
+    event:
+      - push
+      - pull-request
+
+  - name: deploy
+    image: docker
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
+    environment:
+      NODE_ENV:
+        from_secret: NODE_ENV
+      SECRET:
+        from_secret: SECRET
+      SECRET_JWT:
+        from_secret: SECRET_JWT
+      PORT: 3000
+    settings:
+      build_args_from_env:
+      - NODE_ENV
+      - SECRET
+      - SECRET_JWT
+      - PORT
+    commands:
+      - docker container stop auth_service || true && docker rm auth_service || true
+      - docker build -t nick/auth_service .
+      - docker run -v /home/auth_service_logs:/home/node/logs -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -p 8445:3000 -d --name=auth_service nick/auth_service
+
+  - name: telegram
+    image: appleboy/drone-telegram:latest
+    settings:
+      token:
+        from_secret: telegram_token
+      to:
+        from_secret: telegram_user_id
+      message: >
+      format: html
+      message: >
+        {{#success build.status}}
+          <code>{{repo.owner}}/{{repo.name}}</code> <a href="{{build.link}}">SUCCESS</a>
+          <code>{{commit.branch}}</code>@<a href="{{commit.link}}">{{truncate commit.sha 7}}</a>
+        {{else}}
+          <code>{{repo.owner}}/{{repo.name}}</code> <a href="{{build.link}}">FAILURE</a>
+          <code>{{commit.branch}}</code>@<a href="{{commit.link}}">{{truncate commit.sha 7}}</a>
+        {{/success}}
+    when:
+      status: [success, failure]
+
+volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
+```
