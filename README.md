@@ -116,9 +116,11 @@
 kind: pipeline
 name: default
 
+#
+
 steps:
   - name: test
-    image: node:10-alpine
+    image: node:10-alpine # docker-hub образ, обязателен на каждом этапе
     commands:
       - npm install
       # - npm run test

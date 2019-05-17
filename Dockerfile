@@ -3,14 +3,16 @@ FROM node:10-alpine
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
 ENV PATH=$PATH:/home/node/.npm-global/bin
 
-WORKDIR /home/node
+RUN mkdir -p /home/node/auth-service && chown -R node:node /home/node/auth-service
+
+WORKDIR /home/node/auth-service
 
 USER node
 
-ADD . /home/node/
+ADD . /home/node/auth-service
 
-RUN mkdir /home/node/logs
-RUN chown node /home/node/logs
+RUN mkdir /home/node/auth-service/logs
+RUN chmod 755 /home/node/auth-service/logs
 RUN npm install pm2 -g
 
 EXPOSE 3000
