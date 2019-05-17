@@ -27,10 +27,16 @@ steps:
       SECRET_JWT:
         from_secret: SECRET_JWT
       PORT: 3000
+    settings:
+      build_args_from_env:
+      - NODE_ENV
+      - SECRET
+      - SECRET_JWT
+      - PORT
     commands:
       - docker container stop auth_service || true && docker rm auth_service || true
       - docker build -t nick/auth_service .
-      - docker run -v /home/auth_service_logs:/app/logs -p 8445:3000 -d --name=auth_service nick/auth_service
+      - docker run -v /home/auth_service_logs:/app/logs -e NODE_ENV=${NODE_ENV} -e SECRET=${SECRET} -e SECRET_JWT=${SECRET_JWT} -e PORT=${PORT} -p 8445:3000 -d --name=auth_service nick/auth_service
 
   - name: telegram
     image: appleboy/drone-telegram:latest
