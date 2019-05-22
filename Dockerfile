@@ -14,6 +14,7 @@ ADD . /home/node/auth-service
 RUN mkdir /home/node/auth-service/logs
 RUN chmod 755 /home/node/auth-service/logs
 RUN npm install pm2 -g
+RUN pm2 startup
 
 EXPOSE 3000
 

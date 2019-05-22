@@ -13,7 +13,7 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 
-const isProduction = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -34,7 +34,7 @@ app.use((req, res, next) => {
 
 if (!isProduction) {
   app.use((err, req, res, next) => {
-    // console.log(err.stack);
+    console.log(err.stack);
 
     res.status(err.status || 500);
 

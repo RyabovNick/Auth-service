@@ -30,7 +30,6 @@ passport.use(
     client.on('connectTimeout', err => {
       // handler here
       // The ldap connection attempt has been timed out...
-      console.log('err2: ', err);
       logger.log('error', 'ldapConnectTimeoutError', { err });
     });
 
@@ -45,16 +44,22 @@ passport.use(
           logger.log('error', 'InvalidCredentialsError', { username });
           done(null, false, { msg: 'Неверный логин или пароль' });
         } else {
-          logger.log('error', 'LdapAuthError', { username });
-          done(null, false, {
-            msg: 'Произошла ошибка, пожалуйста, попробуйте позднее',
-          });
+          console.log('client: ', client);
+          try {
+            logger.log('error', 'LdapAuthError', { username });
+            done(null, false, {
+              msg: 'Произошла ошибка, пожалуйста, попробуйте позднее',
+            });
+          } catch (e) {
+            console.log(e);
+          }
         }
       } else {
         authLogger.log('success', 'successAuth', { username });
-        let options = {
+
+        const options = {
           filter: `(sAMAccountName=${username})`,
-          scope: 'sub', //what is it?
+          scope: 'sub',
           attributes: [
             'cn', //ФИО
             'memberOf', //Группа
@@ -94,9 +99,7 @@ passport.use(
             });
           });
           res.on('end', result => {
-            // what is it?
             client.unbind(err => {
-              // handle error here
               if (err) {
                 logger.log('error', 'LdapUnbindError', { username, err });
               }

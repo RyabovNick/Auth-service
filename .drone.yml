@@ -6,7 +6,7 @@ steps:
     image: node:10-alpine
     commands:
       - npm install
-      # - npm run test
+      - npm run test
     when:
     branch:
       - master
@@ -26,6 +26,14 @@ steps:
         from_secret: SECRET
       SECRET_JWT:
         from_secret: SECRET_JWT
+      TEACHER_LOGIN:
+        from_secret: TEACHER_LOGIN
+      TEACHER_PASS:
+        from_secret: TEACHER_PASS
+      STUDENT_LOGIN:
+        from_secret: STUDENT_LOGIN
+      STUDENT_PASS:
+        from_secret: STUDENT_PASS
       PORT: 3000
     settings:
       build_args_from_env:
@@ -33,10 +41,15 @@ steps:
       - SECRET
       - SECRET_JWT
       - PORT
+      - TEACHER_LOGIN
+      - TEACHER_PASS
+      - STUDENT_LOGIN
+      - STUDENT_PASS
     commands:
-      - docker container stop auth_service || true && docker rm auth_service || true
       - docker build -t nick/auth_service .
-      - docker run -v /home/auth_service_logs:/home/node/auth-service/logs -v /home/ssl:/home/node/auth-service/ssl -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -p 8445:3000 -d --name=auth_service nick/auth_service
+      - docker rmi -f $(docker images -f "dangling=true" -q) || true
+      - docker container stop auth_service || true && docker rm auth_service || true
+      - docker run -v /home/auth_service_logs:/home/node/auth-service/logs -v /home/ssl:/home/node/auth-service/ssl -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -e TEACHER_LOGIN=$TEACHER_LOGIN -e TEACHER_PASS=$TEACHER_PASS -e STUDENT_LOGIN=$STUDENT_LOGIN -e STUDENT_PASS=$STUDENT_PASS -p 8445:3000 -d --name=auth_service nick/auth_service
 
   - name: telegram
     image: appleboy/drone-telegram:latest
