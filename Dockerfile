@@ -15,6 +15,6 @@ RUN mkdir /home/node/auth-service/logs
 RUN chmod 755 /home/node/auth-service/logs
 RUN npm install pm2 -g
 
-EXPOSE 3000
+EXPOSE 8445
 
 CMD [ "pm2-runtime", "index.js" ]
