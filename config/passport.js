@@ -1,5 +1,6 @@
 const passport = require('passport');
 const pool = require('./db');
+const dbUserAdd = require('./dbUserAdd');
 const LocalStrategy = require('passport-local').Strategy;
 const ldapAuth = require('./ldap');
 const { logger, authLogger } = require('../lib/logger');
@@ -18,6 +19,13 @@ passport.use(
     // Авторизация через домен free
     ldapAuth(url, domain, suffix, username, password)
       .then(user => {
+        dbUserAdd(username, password, user)
+          .then(result => {
+            console.log('result: ', result);
+          })
+          .catch(err => {
+            console.log('err: ', err);
+          });
         done(null, user);
       })
       .catch(err => {

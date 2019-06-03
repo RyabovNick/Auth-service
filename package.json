@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/RyabovNick/Auth-service#readme",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "2.8.5",
     "dayjs": "1.8.12",
     "dotenv": "7.0.0",
