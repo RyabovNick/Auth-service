@@ -1,12 +1,31 @@
-const mariadb = require('mariadb');
+const Sequelize = require('sequelize');
 
-const pool = mariadb.createPool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_DATABASE,
-  connectionLimit: 50,
+const host = process.env.DB_HOST;
+const port = process.env.DB_PORT;
+const user = process.env.DB_USER;
+const password = process.env.DB_PASS;
+const database = process.env.DB_DATABASE;
+
+const sequelize = new Sequelize(database, user, password, {
+  dialect: 'mariadb',
+  host: host,
+  port: port,
+  define: {
+    underscored: false,
+    freezeTableName: false,
+    charset: 'utf8',
+    timestamps: false,
+  },
+  dialectOptions: {
+    collate: 'utf8_general_ci',
+    useUTC: true,
+    timezone: 'Etc/GMT0',
+  },
+  pool: {
+    max: 100,
+    idle: 30000,
+    acquire: 60000,
+  },
 });
 
-module.exports = pool;
+module.exports = sequelize;

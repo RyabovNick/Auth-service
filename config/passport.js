@@ -1,6 +1,6 @@
 const passport = require('passport');
 const pool = require('./db');
-const dbUserAdd = require('./dbUserAdd');
+const { dbUserAdd, dbUserCheck } = require('./localDB');
 const LocalStrategy = require('passport-local').Strategy;
 const ldapAuth = require('./ldap');
 const { logger, authLogger } = require('../lib/logger');
@@ -15,17 +15,24 @@ const suffixUnidomain = 'dc=' + domainUnidomain.replace(/\./g, ',dc=');
 
 passport.use(
   new LocalStrategy((username, password, done) => {
+    dbUserCheck(username, password)
+      .then(user => {
+        console.log('user: ', user);
+      })
+      .catch(err => {
+        console.log('err: ', err);
+      });
     // Проверяем наличие пользователя в локальной БД
     // Авторизация через домен free
     ldapAuth(url, domain, suffix, username, password)
       .then(user => {
-        dbUserAdd(username, password, user)
-          .then(result => {
-            console.log('result: ', result);
-          })
-          .catch(err => {
-            console.log('err: ', err);
-          });
+        // dbUserAdd(username, password, user)
+        //   .then(result => {
+        //     logger.log('info', 'User add to local db successfully', result);
+        //   })
+        //   .catch(err => {
+        //     logger.log('error', 'cannotAddUserToLocalDB', { err });
+        //   });
         done(null, user);
       })
       .catch(err => {
@@ -38,6 +45,13 @@ passport.use(
           password,
         )
           .then(user => {
+            // dbUserAdd(username, password, user)
+            //   .then(result => {
+            //     logger.log('info', 'User add to local db successfully', result);
+            //   })
+            //   .catch(err => {
+            //     logger.log('error', 'cannotAddUserToLocalDB', { err });
+            //   });
             done(null, user);
           })
           .catch(e => {
