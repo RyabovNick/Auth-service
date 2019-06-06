@@ -8,11 +8,11 @@ steps:
       - npm install
       # - npm run test
     when:
-    branch:
-      - master
-    event:
-      - push
-      - pull-request
+      branch:
+        - master
+      event:
+        - push
+        - pull-request
 
   - name: deploy
     image: docker
@@ -50,6 +50,12 @@ steps:
       - docker rmi -f $(docker images -f "dangling=true" -q) || true
       - docker container stop auth_service || true && docker rm auth_service || true
       - docker run -v /home/auth_service_logs:/home/node/auth-service/logs -v /home/ssl:/home/node/auth-service/ssl -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -e TEACHER_LOGIN=$TEACHER_LOGIN -e TEACHER_PASS=$TEACHER_PASS -e STUDENT_LOGIN=$STUDENT_LOGIN -e STUDENT_PASS=$STUDENT_PASS -p 8445:8445 --net="host" -d --restart="always" --name=auth_service nick/auth_service
+    when:
+      branch:
+        - master
+      event:
+        - push
+        - pull-request
 
   - name: telegram
     image: appleboy/drone-telegram:latest
