@@ -1,6 +1,9 @@
-const pool = require('./db');
+const sql = require('mssql');
+const pool = require('../config/1c_db');
 const bcrypt = require('bcryptjs');
 const Users = require('../models/users');
+const Students = require('../models/students');
+const { generateRefreshJWT } = require('./jwt');
 
 /**
  * Save user info to local db
@@ -10,36 +13,66 @@ const Users = require('../models/users');
  */
 function dbUserAdd(username, password, user) {
   return new Promise((resolve, reject) => {
-    pool
-      .query(
-        `
-        Select *
-        From users
-        Where username = ?
-      `,
-        [username],
-      )
-      .then(rows => {
-        if (rows.length === 0) {
-          const hash = setPassword(password);
+    const hash = setPassword(password);
+    Users.create({
+      username,
+      hash,
+      token: generateRefreshJWT(),
+      domain: user.domain,
+      last_check: new Date(),
+    })
+      .then(newUser => {
+        // лезе в базу 1С и ищем инфу
+        if (user.role === 'Students') {
+          pool.connect(err => {
+            if (err) reject(err);
 
-          pool
-            .query(
+            const request = new sql.Request(pool);
+            request.input('code', sql.NChar, user.oneCcode);
+            request.query(
               `
-              INSERT INTO users (username, hash, domain, last_check)
-              VALUES (?,?,?,?)
-            `,
-              [username, hash, user.domain, new Date()],
-            )
-            .then(res => {
-              resolve(username);
-            })
-            .catch(e => {
-              reject(e);
-            });
-        } else {
-          // обновить информацию о пользователе
+              Select [Код] as [code]
+                ,[Полное_Имя] as [fio]
+                ,[Имя] as [name]
+                ,[Фамилия] as [surname]
+                ,[Отчество] as [patronymic]
+                ,[Дата_Рождения] as [birth]
+                ,[Пол] as [sex]
+                ,[Зачетная_Книга] as [id_book]
+                ,[Форма_Обучения] as [form]
+                ,[Факультет] as [faculty]
+                ,[Направление] as [direction]
+                ,[Профиль] as [profile]
+                ,[Курс] as [course]
+                ,[Группа] as [group]
+                ,[Основа] as [basis]
+                ,[Вид_Образования] as [kind]
+                ,[Уровень_Подготовки] as [level]
+                ,[Учебный_Год] as [year]
+              FROM [UniversityPROF].[dbo].[су_ИнформацияОСтудентах]
+              where Код = @code and [Статус] = 'Является студентом'
+              order by Учебный_Год desc
+              `,
+              (err, result) => {
+                if (err) reject(err);
+                // берём только 1-ую запись
+                // по идее в таком запросе для каждого должна
+                // возвращаться 1 запись (так и есть, но вдруг косяк какой)
+                let student = result.recordset[0];
+                // добавить ещё id, т.к. users - students 1 to 1
+                student.id = newUser.id;
+                Students.create(student)
+                  .then(newStudent => {
+                    resolve(newStudent);
+                  })
+                  .catch(e => {
+                    reject(e);
+                  });
+              },
+            );
+          });
         }
+        resolve(username);
       })
       .catch(err => {
         reject(err);
@@ -60,30 +93,18 @@ function dbUserCheck(username, password) {
           const { hash } = users[0].dataValues;
           bcrypt.compare(password, hash, (err, res) => {
             if (err) reject(err);
-            if (res) resolve(true);
-            else resolve(false);
+            if (res) {
+              // вернуть всю информацию о пользователе
+              resolve(true);
+            } else reject(false);
           });
         } else {
           reject(new Error('UserDoesNotExist'));
         }
       })
       .catch(err => {
-        console.log(err);
         reject(err);
       });
-    // pool
-    //   .query(
-    //     `
-    //   Select username, hash
-    //   FROM users
-    //   where username = ?
-    // `,
-    //     [username],
-    //   )
-    //   .then(rows => {})
-    //   .catch(err => {
-    //     reject(err);
-    //   });
   });
 }
 

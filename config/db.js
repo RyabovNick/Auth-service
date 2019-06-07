@@ -10,6 +10,7 @@ const sequelize = new Sequelize(database, user, password, {
   dialect: 'mariadb',
   host: host,
   port: port,
+  logging: false,
   define: {
     underscored: false,
     freezeTableName: false,
