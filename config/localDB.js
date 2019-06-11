@@ -16,10 +16,11 @@ const {
 function dbUserAdd(username, password, user) {
   return new Promise((resolve, reject) => {
     const hash = setPassword(password);
+    const token = generateRefreshJWT()
     Users.create({
         username,
         hash,
-        token: generateRefreshJWT(),
+        token,
         domain: user.domain,
         last_check: new Date(),
       })
@@ -68,7 +69,12 @@ function dbUserAdd(username, password, user) {
                 student.id = addId;
                 Students.create(student)
                   .then(newStudent => {
-                    resolve(newStudent);
+                    console.log('newStudent: ', newStudent);
+                    newStudent.dataValues.token = token;
+                    newStudent.dataValues.role = user.role;
+                    newStudent.dataValues.caf = user.caf;
+                    newStudent.dataValues.oneCcode = user.oneCcode;
+                    resolve(newStudent.dataValues);
                   })
                   .catch(e => {
                     reject(e);
@@ -77,7 +83,8 @@ function dbUserAdd(username, password, user) {
             );
           });
         }
-        resolve(username);
+        // что это?
+        // resolve(username);
       })
       .catch(err => {
         reject(err);
@@ -88,21 +95,44 @@ function dbUserAdd(username, password, user) {
 function dbUserCheck(username, password) {
   return new Promise((resolve, reject) => {
     Users.findAll({
-        attributes: ['username', 'hash', 'token'],
+        attributes: ['id', 'username', 'hash', 'token'],
         where: {
           username,
         },
       })
       .then(users => {
         if (users.length !== 0) {
+
           const {
             hash
           } = users[0].dataValues;
           bcrypt.compare(password, hash, (err, res) => {
             if (err) reject(err);
+
             if (res) {
-              // вернуть всю информацию о пользователе
-              resolve(true);
+              if (users[0].dataValues.token === '') {
+
+                // получаем новый токен
+
+                const token = generateRefreshJWT();
+
+                Users.update({
+                  token
+                }, {
+                  where: {
+                    id: users[0].dataValues.id
+                  }
+                }).then(() => {
+                  // добавить больше информации о пользователе (роль, группа и т.д.)
+                  resolve({
+                    token
+                  })
+                })
+
+              } else {
+                // вернуть всю информацию о пользователе
+                resolve(users[0].dataValues);
+              }
             } else reject(false);
           });
         } else {

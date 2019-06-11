@@ -24,6 +24,7 @@ router.post('/login', (req, res, next) => {
     }
 
     if (user) {
+      console.log('user: ', user);
       return res.json({
         user: toAuthJSON(user)
       });
@@ -66,7 +67,7 @@ function toAuthJSON(user) {
     caf: user.caf,
     oneCcode: user.oneCcode,
     token: generateJWT(user),
-    refreshToken: generateRefreshJWT(),
+    refreshToken: user.token,
   };
 }
 
