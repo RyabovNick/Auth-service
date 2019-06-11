@@ -3,7 +3,9 @@ const pool = require('../config/1c_db');
 const bcrypt = require('bcryptjs');
 const Users = require('../models/users');
 const Students = require('../models/students');
-const { generateRefreshJWT } = require('./jwt');
+const {
+  generateRefreshJWT
+} = require('./jwt');
 
 /**
  * Save user info to local db
@@ -15,12 +17,12 @@ function dbUserAdd(username, password, user) {
   return new Promise((resolve, reject) => {
     const hash = setPassword(password);
     Users.create({
-      username,
-      hash,
-      token: generateRefreshJWT(),
-      domain: user.domain,
-      last_check: new Date(),
-    })
+        username,
+        hash,
+        token: generateRefreshJWT(),
+        domain: user.domain,
+        last_check: new Date(),
+      })
       .then(newUser => {
         let addId;
         if (newUser.dataValues) addId = newUser.dataValues.id;
@@ -86,14 +88,16 @@ function dbUserAdd(username, password, user) {
 function dbUserCheck(username, password) {
   return new Promise((resolve, reject) => {
     Users.findAll({
-      attributes: ['username', 'hash'],
-      where: {
-        username,
-      },
-    })
+        attributes: ['username', 'hash', 'token'],
+        where: {
+          username,
+        },
+      })
       .then(users => {
         if (users.length !== 0) {
-          const { hash } = users[0].dataValues;
+          const {
+            hash
+          } = users[0].dataValues;
           bcrypt.compare(password, hash, (err, res) => {
             if (err) reject(err);
             if (res) {
