@@ -22,6 +22,9 @@ function dbUserAdd(username, password, user) {
       last_check: new Date(),
     })
       .then(newUser => {
+        let addId;
+        if (newUser.dataValues) addId = newUser.dataValues.id;
+        else addId = newUser.id;
         // лезе в базу 1С и ищем инфу
         if (user.role === 'Students') {
           pool.connect(err => {
@@ -50,7 +53,7 @@ function dbUserAdd(username, password, user) {
                 ,[Уровень_Подготовки] as [level]
                 ,[Учебный_Год] as [year]
               FROM [UniversityPROF].[dbo].[су_ИнформацияОСтудентах]
-              where Код = @code and [Статус] = 'Является студентом'
+              where Код = RIGHT('0000' + @code, 9) and [Статус] = 'Является студентом'
               order by Учебный_Год desc
               `,
               (err, result) => {
@@ -60,7 +63,7 @@ function dbUserAdd(username, password, user) {
                 // возвращаться 1 запись (так и есть, но вдруг косяк какой)
                 let student = result.recordset[0];
                 // добавить ещё id, т.к. users - students 1 to 1
-                student.id = newUser.id;
+                student.id = addId;
                 Students.create(student)
                   .then(newStudent => {
                     resolve(newStudent);
