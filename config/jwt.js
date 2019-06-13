@@ -8,10 +8,9 @@ const secret = process.env.SECRET_JWT;
 function generateJWT(user) {
   let today = new Date();
   let exp = new Date(today);
-  exp.setDate(today.getHours() + 3);
+  exp.setMinutes(today.getMinutes() + 1);
 
-  return jwt.sign(
-    {
+  return jwt.sign({
       username: user.username,
       fio: user.fio,
       role: user.role,
@@ -28,12 +27,14 @@ function generateRefreshJWT() {
   let exp = new Date(today);
   exp.setDate(today.getDate() + 30);
 
-  return jwt.sign(
-    {
+  return jwt.sign({
       exp: parseInt(exp.getTime() / 1000),
     },
     secret,
   );
 }
 
-module.exports = { generateJWT, generateRefreshJWT };
+module.exports = {
+  generateJWT,
+  generateRefreshJWT
+};

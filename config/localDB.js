@@ -3,6 +3,7 @@ const pool = require('../config/1c_db');
 const bcrypt = require('bcryptjs');
 const Users = require('../models/users');
 const Students = require('../models/students');
+const User_roles = require('../models/user_roles');
 const {
   generateRefreshJWT
 } = require('./jwt');
@@ -70,15 +71,38 @@ function dbUserAdd(username, password, user) {
                 Students.create(student)
                   .then(newStudent => {
                     console.log('newStudent: ', newStudent);
-                    newStudent.dataValues.token = token;
-                    newStudent.dataValues.role = user.role;
-                    newStudent.dataValues.caf = user.caf;
-                    newStudent.dataValues.oneCcode = user.oneCcode;
-                    resolve(newStudent.dataValues);
+
+                    newStudent.dataValues = {
+                      token,
+                      role: user.role,
+                      caf: user.caf,
+                      oneCcode: user.oneCcode,
+                      username
+                    }
+
+                    const userRole = {
+                      // поправить на поиск id роли в базе
+                      role_id: 1,
+                      people_id: addId,
+                      from: new Date(),
+                      // добавить до какого момента действует роль (или нет)
+                    }
+
+                    User_roles.create(userRole)
+                      .then(() => {
+                        resolve(newStudent.dataValues);
+                      })
+                      .catch(e => {
+                        reject(e);
+                      })
+
                   })
                   .catch(e => {
                     reject(e);
                   });
+
+
+
               },
             );
           });
@@ -124,6 +148,8 @@ function dbUserCheck(username, password) {
                   }
                 }).then(() => {
                   // добавить больше информации о пользователе (роль, группа и т.д.)
+                  // тащить из базы:
+                  // роль, username, oneCcode, caf, fio
                   resolve({
                     token
                   })
