@@ -1,9 +1,19 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const sequelize = require('../config/db');
+const Model = Sequelize.Model;
 const Users = require('./users');
 const Roles = require('./roles');
 
-const User_roles = db.define('user_roles', {
+class User_roles extends Model {}
+
+// !!!Добавить внешний ключ
+User_roles.init({
+  role_id: {
+    type: Sequelize.INTEGER
+  },
+  user_id: {
+    type: Sequelize.INTEGER
+  },
   from: {
     type: Sequelize.DATE,
   },
@@ -11,12 +21,14 @@ const User_roles = db.define('user_roles', {
     type: Sequelize.DATE,
   }
 }, {
-  underscored: true,
-});
+  sequelize,
+  modelName: 'user_roles',
+  underscored: true
+})
 
-Users.hasMany(User_roles);
-User_roles.belongsTo(Users);
-Roles.hasMany(User_roles);
-User_roles.belongsTo(Roles);
+// Users.hasMany(User_roles);
+// User_roles.belongsTo(Users)
+// Roles.hasMany(User_roles);
+// User_roles.belongsTo(Roles)
 
 module.exports = User_roles;

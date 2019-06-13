@@ -1,7 +1,10 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const sequelize = require('../config/db');
+const Model = Sequelize.Model;
 
-const Students = db.define('students', {
+class Students extends Model {}
+
+Students.init({
   code: {
     type: Sequelize.STRING(150),
   },
@@ -56,6 +59,9 @@ const Students = db.define('students', {
   year: {
     type: Sequelize.INTEGER(4),
   },
-});
+}, {
+  sequelize,
+  modelName: 'students'
+})
 
 module.exports = Students;

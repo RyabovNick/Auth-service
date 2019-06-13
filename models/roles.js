@@ -1,10 +1,17 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const sequelize = require('../config/db');
+const Model = Sequelize.Model;
 
-const Roles = db.define('roles', {
+class Roles extends Model {}
+
+Roles.init({
   name: {
     type: Sequelize.STRING(250),
   }
-});
+}, {
+  sequelize,
+  modelName: 'roles'
+})
+
 
 module.exports = Roles;

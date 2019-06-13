@@ -1,7 +1,10 @@
 const Sequelize = require('sequelize');
-const db = require('../config/db');
+const sequelize = require('../config/db');
+const Model = Sequelize.Model;
 
-const Users = db.define('users', {
+class Users extends Model {}
+
+Users.init({
   username: {
     type: Sequelize.STRING(150),
   },
@@ -17,6 +20,9 @@ const Users = db.define('users', {
   last_check: {
     type: Sequelize.DATE,
   },
-});
+}, {
+  sequelize,
+  modelName: 'users'
+})
 
 module.exports = Users;

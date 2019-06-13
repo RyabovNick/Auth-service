@@ -61,6 +61,7 @@ function dbUserAdd(username, password, user) {
               order by Учебный_Год desc
               `,
               (err, result) => {
+                pool.close();
                 if (err) reject(err);
                 // берём только 1-ую запись
                 // по идее в таком запросе для каждого должна
@@ -68,38 +69,58 @@ function dbUserAdd(username, password, user) {
                 let student = result.recordset[0];
                 // добавить ещё id, т.к. users - students 1 to 1
                 student.id = addId;
-                Students.create(student)
-                  .then(newStudent => {
-                    console.log('newStudent: ', newStudent);
 
-                    newStudent.dataValues = {
-                      token,
-                      role: user.role,
-                      caf: user.caf,
-                      oneCcode: user.oneCcode,
-                      username
-                    }
+                const addStudent = Students.create(student);
 
-                    const userRole = {
-                      // поправить на поиск id роли в базе
-                      role_id: 1,
-                      people_id: addId,
-                      from: new Date(),
-                      // добавить до какого момента действует роль (или нет)
-                    }
+                const userRole = {
+                  // поправить на поиск id роли в базе
+                  role_id: 1,
+                  user_id: addId,
+                  from: new Date(),
+                  // добавить до какого момента действует роль (или нет)
+                }
 
-                    User_roles.create(userRole)
-                      .then(() => {
-                        resolve(newStudent.dataValues);
-                      })
-                      .catch(e => {
-                        reject(e);
-                      })
+                const addUserRoles = User_roles.create(userRole)
 
-                  })
-                  .catch(e => {
-                    reject(e);
-                  });
+                Promise.all([addStudent, addUserRoles]).then(values => {
+                  console.log('values: ', values);
+                  resolve(values)
+                })
+
+                // Students.create(student)
+                //   .then(newStudent => {
+                //     console.log('newStudent: ', newStudent);
+
+                //     newStudent.dataValues = {
+                //       token,
+                //       role: user.role,
+                //       caf: user.caf,
+                //       oneCcode: user.oneCcode,
+                //       username
+                //     }
+
+                //     const userRole = {
+                //       // поправить на поиск id роли в базе
+                //       role_id: 1,
+                //       people_id: addId,
+                //       from: new Date(),
+                //       // добавить до какого момента действует роль (или нет)
+                //     }
+
+
+
+                //     // User_roles.create(userRole)
+                //     //   .then(() => {
+                //     //     resolve(newStudent.dataValues);
+                //     //   })
+                //     //   .catch(e => {
+                //     //     reject(e);
+                //     //   })
+
+                //   })
+                //   .catch(e => {
+                //     reject(e);
+                //   });
 
 
 
