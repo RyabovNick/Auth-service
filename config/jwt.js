@@ -14,7 +14,7 @@ function generateJWT(user) {
       username: user.username,
       fio: user.fio,
       role: user.role,
-      caf: user.caf,
+      group: user.group,
       oneCcode: user.oneCcode,
       exp: parseInt(exp.getTime() / 1000),
     },

@@ -1,5 +1,8 @@
 const ldap = require('ldapjs');
-const { logger, authLogger } = require('../lib/logger');
+const {
+  logger,
+  authLogger
+} = require('../lib/logger');
 
 /**
  * Check and return user information from ldap
@@ -24,18 +27,22 @@ function ldapAuth(url, domain, suffix, username, password) {
     });
 
     client.on('error', err => {
-      logger.log('error', 'ldapCreateClientError', { err });
+      logger.log('error', 'ldapCreateClientError', {
+        err
+      });
       reject(err);
     });
 
     client.on('connectTimeout', err => {
       // handler here
       // The ldap connection attempt has been timed out...
-      logger.log('error', 'ldapConnectTimeoutError', { err });
+      logger.log('error', 'ldapConnectTimeoutError', {
+        err
+      });
       reject(err);
     });
 
-    client.on('connect', function() {
+    client.on('connect', function () {
       // The ldap connection is ready to use.
       // Place your subsequent ldapjs code here...
     });
@@ -43,18 +50,24 @@ function ldapAuth(url, domain, suffix, username, password) {
     client.bind(`${username}@${domain}`, password, err => {
       if (err != null) {
         if (err.name === 'InvalidCredentialsError') {
-          logger.log('error', 'InvalidCredentialsError', { username });
+          logger.log('error', 'InvalidCredentialsError', {
+            username
+          });
           reject(new Error('InvalidCredentialsError'));
         } else {
           try {
-            logger.log('error', 'LdapAuthError', { username });
+            logger.log('error', 'LdapAuthError', {
+              username
+            });
             reject(new Error('LdapAuthError'));
           } catch (e) {
             reject(new Error('LdapAuthError'));
           }
         }
       } else {
-        authLogger.log('success', 'successAuth', { username });
+        authLogger.log('success', 'successAuth', {
+          username
+        });
 
         const options = {
           filter: `(sAMAccountName=${username})`,
@@ -69,7 +82,10 @@ function ldapAuth(url, domain, suffix, username, password) {
 
         client.search(suffix, options, (err, res) => {
           if (err) {
-            logger.log('error', 'LdapSearchError', { username, options });
+            logger.log('error', 'LdapSearchError', {
+              username,
+              options
+            });
             reject(new Error('LdapSearchError'));
           }
 
@@ -93,7 +109,7 @@ function ldapAuth(url, domain, suffix, username, password) {
               let role = roleObject[0].replace('CN=', '');
               user.role = role;
 
-              user.caf = entry.object.department;
+              user.group = entry.object.department;
               user.oneCcode = entry.object.employeeNumber;
               user.domain = 'free';
 
@@ -102,13 +118,19 @@ function ldapAuth(url, domain, suffix, username, password) {
           });
           res.on('searchReference', referral => {});
           res.on('error', err => {
-            logger.log('error', 'LdapAuthError', { username, err });
+            logger.log('error', 'LdapAuthError', {
+              username,
+              err
+            });
             reject(new Error('LdapAuthError'));
           });
           res.on('end', result => {
             client.unbind(err => {
               if (err) {
-                logger.log('error', 'LdapUnbindError', { username, err });
+                logger.log('error', 'LdapUnbindError', {
+                  username,
+                  err
+                });
                 reject(err);
               }
             });

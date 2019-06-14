@@ -5,7 +5,7 @@ const Model = Sequelize.Model;
 class Students extends Model {}
 
 Students.init({
-  code: {
+  oneCcode: {
     type: Sequelize.STRING(150),
   },
   fio: {

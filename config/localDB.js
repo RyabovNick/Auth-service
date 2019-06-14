@@ -1,12 +1,12 @@
-const sql = require('mssql');
-const pool = require('../config/1c_db');
-const bcrypt = require('bcryptjs');
-const Users = require('../models/users');
-const Students = require('../models/students');
-const User_roles = require('../models/user_roles');
+const sql = require("mssql");
+const pool = require("../config/1c_db");
+const bcrypt = require("bcryptjs");
+const Users = require("../models/users");
+const Students = require("../models/students");
+const User_roles = require("../models/user_roles");
 const {
   generateRefreshJWT
-} = require('./jwt');
+} = require("./jwt");
 
 /**
  * Save user info to local db
@@ -17,28 +17,28 @@ const {
 function dbUserAdd(username, password, user) {
   return new Promise((resolve, reject) => {
     const hash = setPassword(password);
-    const token = generateRefreshJWT()
+    const token = generateRefreshJWT();
     Users.create({
         username,
         hash,
         token,
         domain: user.domain,
-        last_check: new Date(),
+        last_check: new Date()
       })
       .then(newUser => {
         let addId;
         if (newUser.dataValues) addId = newUser.dataValues.id;
         else addId = newUser.id;
         // лезе в базу 1С и ищем инфу
-        if (user.role === 'Students') {
+        if (user.role === "Students") {
           pool.connect(err => {
             if (err) reject(err);
 
             const request = new sql.Request(pool);
-            request.input('code', sql.NChar, user.oneCcode);
+            request.input("code", sql.NChar, user.oneCcode);
             request.query(
               `
-              Select [Код] as [code]
+              Select [Код] as [oneCcode]
                 ,[Полное_Имя] as [fio]
                 ,[Имя] as [name]
                 ,[Фамилия] as [surname]
@@ -76,16 +76,22 @@ function dbUserAdd(username, password, user) {
                   // поправить на поиск id роли в базе
                   role_id: 1,
                   user_id: addId,
-                  from: new Date(),
+                  from: new Date()
                   // добавить до какого момента действует роль (или нет)
-                }
+                };
 
-                const addUserRoles = User_roles.create(userRole)
+                const addUserRoles = User_roles.create(userRole);
 
                 Promise.all([addStudent, addUserRoles]).then(values => {
-                  console.log('values: ', values);
-                  resolve(values)
-                })
+                  const resolveUser = {
+                    ...values[0].dataValues,
+                    role: "Students",
+                    username
+                  }
+                  console.log("values: ", resolveUser);
+
+                  resolve(resolveUser);
+                });
 
                 // Students.create(student)
                 //   .then(newStudent => {
@@ -107,8 +113,6 @@ function dbUserAdd(username, password, user) {
                 //       // добавить до какого момента действует роль (или нет)
                 //     }
 
-
-
                 //     // User_roles.create(userRole)
                 //     //   .then(() => {
                 //     //     resolve(newStudent.dataValues);
@@ -121,10 +125,7 @@ function dbUserAdd(username, password, user) {
                 //   .catch(e => {
                 //     reject(e);
                 //   });
-
-
-
-              },
+              }
             );
           });
         }
@@ -140,14 +141,13 @@ function dbUserAdd(username, password, user) {
 function dbUserCheck(username, password) {
   return new Promise((resolve, reject) => {
     Users.findAll({
-        attributes: ['id', 'username', 'hash', 'token'],
+        attributes: ["id", "username", "hash", "token"],
         where: {
-          username,
-        },
+          username
+        }
       })
       .then(users => {
         if (users.length !== 0) {
-
           const {
             hash
           } = users[0].dataValues;
@@ -155,8 +155,7 @@ function dbUserCheck(username, password) {
             if (err) reject(err);
 
             if (res) {
-              if (users[0].dataValues.token === '') {
-
+              if (users[0].dataValues.token === "") {
                 // получаем новый токен
 
                 const token = generateRefreshJWT();
@@ -171,19 +170,44 @@ function dbUserCheck(username, password) {
                   // добавить больше информации о пользователе (роль, группа и т.д.)
                   // тащить из базы:
                   // роль, username, oneCcode, caf, fio
-                  resolve({
-                    token
+                  Students.findAll({
+                    attributes: ["id", "fio", "oneCcode", "group"],
+                    where: {
+                      id: users[0].dataValues.id
+                    }
+                  }).then(user => {
+                    resolve({
+                      ...user[0].dataValues,
+                      role: "Students", // тащить из базы, искать все
+                      token,
+                      username
+                    });
                   })
-                })
-
+                });
               } else {
                 // вернуть всю информацию о пользователе
-                resolve(users[0].dataValues);
+                const {
+                  token
+                } = users[0].dataValues
+
+                Students.findAll({
+                  attributes: ["id", "fio", "oneCcode", "group"],
+                  where: {
+                    id: users[0].dataValues.id
+                  }
+                }).then(user => {
+                  resolve({
+                    ...user[0].dataValues,
+                    role: "Students", // тащить из базы, искать все
+                    token,
+                    username
+                  });
+                })
               }
             } else reject(false);
           });
         } else {
-          reject(new Error('UserDoesNotExist'));
+          reject(new Error("UserDoesNotExist"));
         }
       })
       .catch(err => {
@@ -201,5 +225,5 @@ function setPassword(password) {
 
 module.exports = {
   dbUserAdd,
-  dbUserCheck,
+  dbUserCheck
 };

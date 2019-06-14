@@ -32,10 +32,8 @@ passport.use(
         ldapAuth(url, domain, suffix, username, password)
           .then(user => {
             // добавляем в локальную базу
-            console.log('user: ', user);
             dbUserAdd(username, password, user)
               .then(res => {
-                console.log('res: ', res);
                 logger.log('info', 'User success login and add to local db', {
                   result: user,
                 });

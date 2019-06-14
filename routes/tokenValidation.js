@@ -56,7 +56,6 @@ router.route('/tokenValidation').get((req, res, next) => {
                 token: generateJWT(user),
               }
 
-              console.log('returnUser: ', returnUser);
               res.send(returnUser);
             }
             // если нашли пользователя с таким refreshToken
