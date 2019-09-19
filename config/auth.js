@@ -2,8 +2,8 @@
  * auth middleware
  */
 
-const jwt = require("express-jwt");
-const secret = process.env.SECRET_JWT; // change to env variable
+const jwt = require('express-jwt')
+const secret = process.env.SECRET_JWT // change to env variable
 
 /**
  * Find token in header and return authorization part
@@ -13,15 +13,13 @@ const secret = process.env.SECRET_JWT; // change to env variable
  */
 function getTokenFromHeader(req) {
   if (
-    (req.headers.authorization &&
-      req.headers.authorization.split(" ")[0] === "Token") ||
-    (req.headers.authorization &&
-      req.headers.authorization.split(" ")[0] === "Bearer")
+    (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Token') ||
+    (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer')
   ) {
-    return req.headers.authorization.split(" ")[1];
+    return req.headers.authorization.split(' ')[1]
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -30,15 +28,15 @@ function getTokenFromHeader(req) {
 let auth = {
   required: jwt({
     secret: secret,
-    userProperty: "payload",
+    userProperty: 'payload',
     getToken: getTokenFromHeader
   }),
   optional: jwt({
     secret: secret,
-    userProperty: "payload",
+    userProperty: 'payload',
     credentialsRequired: false,
     getToken: getTokenFromHeader
   })
-};
+}
 
-module.exports = auth;
+module.exports = auth

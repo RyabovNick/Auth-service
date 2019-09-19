@@ -35,7 +35,7 @@
     "mssql": "^5.1.0",
     "passport": "0.4.0",
     "passport-local": "1.0.0",
-    "sequelize": "^5.8.7",
+    "sequelize": "^5.19.0",
     "winston": "3.2.1"
   },
   "devDependencies": {
@@ -43,7 +43,7 @@
     "chai-http": "^4.3.0",
     "faker": "^4.1.0",
     "mocha": "^6.1.4",
-    "sequelize-cli": "^5.4.0",
+    "sequelize-cli": "^5.5.1",
     "supertest": "^4.0.2"
   }
 }
