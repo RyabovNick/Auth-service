@@ -24,10 +24,8 @@ function dbUserAdd(username, password, user) {
       last_check: new Date()
     })
       .then(newUser => {
-        let addId
-        if (newUser.dataValues) addId = newUser.dataValues.id
-        else addId = newUser.id
-        // лезе в базу 1С и ищем инфу
+        const addId = newUser.id
+        // лезем в базу 1С и ищем инфу
         if (user.role === 'Students') {
           pool.connect(err => {
             if (err) reject(err)
@@ -193,12 +191,20 @@ function dbUserCheck(username, password) {
                     id: users[0].id
                   }
                 }).then(user => {
-                  resolve({
-                    ...user[0].dataValues,
-                    role: 'Students', // тащить из базы, искать все
-                    token,
-                    username
-                  })
+                  if (user.length === 0) {
+                    resolve({
+                      role: 'Students',
+                      token,
+                      username
+                    })
+                  } else {
+                    resolve({
+                      ...user[0].dataValues,
+                      role: 'Students', // тащить из базы, искать все
+                      token,
+                      username
+                    })
+                  }
                 })
               }
             } else reject(false)
