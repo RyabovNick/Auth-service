@@ -1,7 +1,7 @@
 const router = require('express').Router()
 const passport = require('passport')
 const jwt = require('jsonwebtoken')
-const { generateJWT, generateRefreshJWT } = require('../config/jwt')
+const { toAuthJSON } = require('../config/jwt')
 const Users = require('../models/users')
 
 router.post('/login', (req, res, next) => {
@@ -56,20 +56,6 @@ router.get('/logout', (req, res, next) => {
     })
 })
 
-/**
- * Return token to user
- * @param {Array} user - id, email
- */
-function toAuthJSON(user) {
-  return {
-    username: user.username,
-    fio: user.fio,
-    role: user.role,
-    group: user.group,
-    oneCcode: user.oneCcode,
-    token: generateJWT(user),
-    refreshToken: user.token
-  }
-}
+
 
 module.exports = router

