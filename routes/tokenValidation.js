@@ -17,7 +17,7 @@ router.route('/tokenValidation').get((req, res, next) => {
       if (err || !decodedToken) {
         // То проверяем какая именно
         // Истёкщий токен обрабатываем отдельно
-        if (err.name === 'TokenExpiredError') {
+        if (err.name === 'TokenExpiredError' && req.headers.refreshtoken) {
           // с таким названием должен на клиенте добавляться в header
           // key: RefreshToken; value: your_token
           const { refreshtoken } = req.headers

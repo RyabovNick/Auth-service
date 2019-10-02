@@ -4,7 +4,10 @@ const bcrypt = require('bcryptjs')
 const Users = require('../models/users')
 const Students = require('../models/students')
 const User_roles = require('../models/user_roles')
-const { generateRefreshJWT, toAuthJSON } = require('./jwt')
+const {
+  generateRefreshJWT,
+  toAuthJSON
+} = require('./jwt')
 
 /**
  * Save user info to local db
@@ -12,7 +15,11 @@ const { generateRefreshJWT, toAuthJSON } = require('./jwt')
  * @param {String} password
  * @param {Object} user
  */
-const dbUserAdd = async ({username, password, user}) => {
+const dbUserAdd = async ({
+  username,
+  password,
+  user
+}) => {
   const hash = setPassword(password)
   const token = generateRefreshJWT()
 
@@ -54,11 +61,18 @@ const dbUserAdd = async ({username, password, user}) => {
       order by Учебный_Год desc
         `)
       .catch(err => {
-          return new Promise((resolve, reject) => {
-            reject(err)
-          })
+        return new Promise((resolve, reject) => {
+          reject(err)
         })
+      })
 
+    let nowRole;
+    try {
+      nowRole = await checkLeader(student[0].dataValues.oneCcode);
+      console.log('nowRole: ', nowRole);
+    } catch (e) {
+      reject(new Error('checkLeaderError'))
+    }
 
     // берём только 1-ую запись
     // по идее в таком запросе для каждого должна
@@ -68,7 +82,7 @@ const dbUserAdd = async ({username, password, user}) => {
     student.id = addId
     const userRole = {
       // поправить на поиск id роли в базе
-      role_id: 1,
+      role_id: nowRole.recordset.length ? 4 : 1,
       user_id: addId,
       from: new Date()
       // добавить до какого момента действует роль (или нет)
@@ -82,7 +96,7 @@ const dbUserAdd = async ({username, password, user}) => {
     return new Promise((resolve) => {
       resolve({
         ...addStudent.dataValues,
-        role: 'Students',
+        role: nowRole ? 'Leader' : 'Student',
         username,
         token
       })
@@ -90,7 +104,10 @@ const dbUserAdd = async ({username, password, user}) => {
   }
 }
 
-const dbUserCheck = async ({ username, password }) => {
+const dbUserCheck = async ({
+  username,
+  password
+}) => {
   const users = await Users.findAll({
     attributes: ['id', 'username', 'hash', 'token'],
     where: {
@@ -99,13 +116,17 @@ const dbUserCheck = async ({ username, password }) => {
   })
 
   if (users.length !== 0) {
-    const { hash } = users[0]
+    const {
+      hash
+    } = users[0]
     const hashPassword = await bcrypt.compare(password, hash)
 
     if (!hashPassword) {
-      return new Promise((resolve) => {resolve(false)})
+      return new Promise((resolve) => {
+        resolve(false)
+      })
     }
-    
+
     if (users[0].token === '' || users[0].token === null) {
       // получаем новый токен
       const token = generateRefreshJWT()
@@ -117,22 +138,19 @@ const dbUserCheck = async ({ username, password }) => {
             id: users[0].id
           }
         }),
-        Users.update(
-          {
-            token
-          },
-          {
-            where: {
-              id: users[0].id
-            }
+        Users.update({
+          token
+        }, {
+          where: {
+            id: users[0].id
           }
-        )
+        })
       ])
 
       return new Promise((resolve) => {
         const user = toAuthJSON({
           ...student[0].dataValues,
-          role: 'Students', // тащить из базы, искать все
+          role: nowRole.recordset.length ? 'Leader' : 'Student', // тащить из базы, искать все
           token,
           username
         })
@@ -141,7 +159,9 @@ const dbUserCheck = async ({ username, password }) => {
       })
     }
 
-    const { token } = users[0]
+    const {
+      token
+    } = users[0]
 
     const student = await Students.findAll({
       attributes: ['id', 'fio', 'oneCcode', 'group'],
@@ -150,10 +170,22 @@ const dbUserCheck = async ({ username, password }) => {
       }
     })
 
+    let nowRole;
+    try {
+      console.log('student[0].dataValues.oneCcode: ', student[0].dataValues.oneCcode);
+      nowRole = await checkLeader(student[0].dataValues.oneCcode);
+
+      console.log('nowRole: ', nowRole);
+
+    } catch (e) {
+      reject(new Error('checkLeaderError'))
+    }
+
     return new Promise((resolve) => {
+
       const user = {
         ...student[0].dataValues,
-        role: 'Students', // тащить из базы, искать все
+        role: nowRole.recordset.length ? 'Leader' : 'Student', // тащить из базы, искать все
         token,
         username
       }
@@ -171,6 +203,24 @@ function setPassword(password) {
   const hash = bcrypt.hashSync(password, salt)
 
   return hash
+}
+
+const checkLeader = async (oneCcode) => {
+  const connection = await pool.connect()
+  const result = await connection.request()
+    .input('code', sql.NChar, oneCcode)
+    .query(`
+        Select t2.Ссылка, t2.Код
+        From [UniversityPROF].[dbo].СтаростыГрупп as t1
+        left Join [UniversityPROF].[dbo].[Справочник_ФизическиеЛица] as t2 on t2.Ссылка = t1.ФизическоеЛицо_Ссылка
+        Where Период like '4019%' and t2.Код = @code
+          `)
+    .catch(err => {
+      return new Promise((resolve, reject) => {
+        reject(err)
+      })
+    })
+  return result
 }
 
 module.exports = {
