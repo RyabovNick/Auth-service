@@ -66,6 +66,8 @@ const dbUserAdd = async ({
         })
       })
 
+    pool.close()
+
     let nowRole;
     try {
       nowRole = await checkLeader(student[0].dataValues.oneCcode);
@@ -146,6 +148,14 @@ const dbUserCheck = async ({
           }
         })
       ])
+      
+      let nowRole;
+      try {
+        nowRole = await checkLeader(student[0].dataValues.oneCcode);
+        console.log('nowRole: ', nowRole);
+      } catch (e) {
+        reject(new Error('checkLeaderError'))
+      }
 
       return new Promise((resolve) => {
         const user = toAuthJSON({
@@ -206,21 +216,27 @@ function setPassword(password) {
 }
 
 const checkLeader = async (oneCcode) => {
-  const connection = await pool.connect()
-  const result = await connection.request()
-    .input('code', sql.NChar, oneCcode)
-    .query(`
-        Select t2.Ссылка, t2.Код
-        From [UniversityPROF].[dbo].СтаростыГрупп as t1
-        left Join [UniversityPROF].[dbo].[Справочник_ФизическиеЛица] as t2 on t2.Ссылка = t1.ФизическоеЛицо_Ссылка
-        Where Период like '4019%' and t2.Код = @code
-          `)
-    .catch(err => {
-      return new Promise((resolve, reject) => {
-        reject(err)
+  try {
+    const connection = await pool.connect()
+    const result = await connection.request()
+      .input('code', sql.NChar, oneCcode)
+      .query(`
+          Select t2.Ссылка, t2.Код
+          From [UniversityPROF].[dbo].СтаростыГрупп as t1
+          left Join [UniversityPROF].[dbo].[Справочник_ФизическиеЛица] as t2 on t2.Ссылка = t1.ФизическоеЛицо_Ссылка
+          Where Период like '4019%' and t2.Код = @code
+            `)
+      .catch(err => {
+        return new Promise((resolve, reject) => {
+          reject(err)
+        })
       })
-    })
-  return result
+    pool.close()
+    return result
+  } catch (e) {
+    console.log('e: ', e);
+    return e
+  }
 }
 
 module.exports = {

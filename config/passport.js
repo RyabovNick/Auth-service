@@ -58,6 +58,7 @@ passport.use(
         msg: 'Неверный логин или пароль'
       })
     } catch (err) {
+      console.log('err: ', err);
       return done(null, false, {
         msg: 'Произошла ошибка, пожалуйста, попробуйте позднее',
         err
