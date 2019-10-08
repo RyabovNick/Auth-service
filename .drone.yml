@@ -44,6 +44,14 @@ steps:
         from_secret: DB_PASS
       DB_DATABASE:
         from_secret: DB_DATABASE
+      DB_1C_SERVER:
+        from_secret: DB_1C_SERVER
+      DB_1C_USER:
+        from_secret: DB_1C_USER
+      DB_1C_PASS:
+        from_secret: DB_1C_PASS
+      DB_1C_DATABASE:
+        from_secret: DB_1C_DATABASE
       PORT: 8445
     settings:
       build_args_from_env:
@@ -60,11 +68,15 @@ steps:
       - DB_USER
       - DB_PASS
       - DB_DATABASE
+      - DB_1C_USER
+      - DB_1C_PASS
+      - DB_1C_SERVER
+      - DB_1C_DATABASE
     commands:
       - docker build -t nick/auth_service .
       - docker rmi -f $(docker images -f "dangling=true" -q) || true
       - docker container stop auth_service || true && docker rm auth_service || true
-      - docker run -v /home/auth_service_logs:/home/node/auth-service/logs -v /home/ssl:/home/node/auth-service/ssl -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -e TEACHER_LOGIN=$TEACHER_LOGIN -e TEACHER_PASS=$TEACHER_PASS -e STUDENT_LOGIN=$STUDENT_LOGIN -e STUDENT_PASS=$STUDENT_PASS -e DB_HOST=$DB_HOST -e DB_PORT=$DB_PORT -e DB_USER=$DB_USER -e DB_PASS=$DB_PASS -e DB_DATABASE=$DB_DATABASE -p 8445:8445 --net="host" -d --restart="always" --name=auth_service nick/auth_service
+      - docker run -v /home/auth_service_logs:/home/node/auth-service/logs -v /home/ssl:/home/node/auth-service/ssl -e NODE_ENV=$NODE_ENV -e SECRET=$SECRET -e SECRET_JWT=$SECRET_JWT -e PORT=$PORT -e TEACHER_LOGIN=$TEACHER_LOGIN -e TEACHER_PASS=$TEACHER_PASS -e STUDENT_LOGIN=$STUDENT_LOGIN -e STUDENT_PASS=$STUDENT_PASS -e DB_HOST=$DB_HOST -e DB_PORT=$DB_PORT -e DB_USER=$DB_USER -e DB_PASS=$DB_PASS -e DB_DATABASE=$DB_DATABASE -e DB_1C_USER=$DB_1C_USER -e DB_1C_PASS=$DB_1C_PASS -e DB_1C_SERVER=$DB_1C_SERVER -e DB_1C_DATABASE=$DB_1C_DATABASE -p 8445:8445 --net="host" -d --restart="always" --name=auth_service nick/auth_service
     when:
       branch:
         - master

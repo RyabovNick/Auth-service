@@ -1,64 +1,61 @@
-const router = require('express').Router();
-const passport = require('passport');
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const secret = process.env.SECRET_JWT;
+const router = require('express').Router()
+const passport = require('passport')
+const jwt = require('jsonwebtoken')
+const { toAuthJSON } = require('../config/jwt')
+const Users = require('../models/users')
 
 router.post('/login', (req, res, next) => {
   if (!req.body.username || !req.body.password) {
-    return res
-      .status(400)
-      .json({ msg: 'Логин или пароль не может быть пустым' });
+    return res.status(400).json({
+      msg: 'Логин или пароль не может быть пустым'
+    })
   }
 
-  passport.authenticate('local', { session: false }, (err, user, info) => {
-    if (err) {
-      return next(err);
-    }
-
-    if (user) {
-      return res.json({ user: toAuthJSON(user) });
-    } else {
-      return res.status(400).json(info);
-    }
-  })(req, res, next);
-});
-
-/**
- * Return token to user
- * @param {Array} user - id, email
- */
-function toAuthJSON(user) {
-  return {
-    username: user.username,
-    fio: user.fio,
-    role: user.role,
-    caf: user.caf,
-    oneCcode: user.oneCcode,
-    token: generateJWT(user),
-  };
-}
-
-/**
- * Generate JWT
- * @param {Array} user - id and username for JWT token payload
- */
-function generateJWT(user) {
-  let today = new Date();
-  let exp = new Date(today);
-  exp.setDate(today.getDate() + 20);
-
-  return jwt.sign(
+  passport.authenticate(
+    'local',
     {
-      username: user.username,
-      fio: user.fio,
-      role: user.role,
-      caf: user.caf,
-      oneCcode: user.oneCcode,
-      exp: parseInt(exp.getTime() / 1000),
+      session: false
     },
-    secret,
-  );
-}
+    (err, user, info) => {
+      if (err) {
+        return next(err)
+      }
 
-module.exports = router;
+      if (user) {
+        return res.json({
+          user: toAuthJSON(user)
+        })
+      } else {
+        return res.status(400).json(info)
+      }
+    }
+  )(req, res, next)
+})
+
+/**
+ * API для выхода со всех устройств
+ */
+router.get('/logout', (req, res, next) => {
+  let decoded = jwt.decode(req.headers.authorization.split(' ')[1])
+
+  Users.update(
+    {
+      token: null
+    },
+    {
+      where: {
+        username: decoded.username
+      }
+    }
+  )
+    .then(user => {
+      res.sendStatus(200)
+    })
+    .catch(err => {
+      res.status(400).send(err)
+    })
+})
+
+
+
+module.exports = router
