@@ -67,10 +67,13 @@ const dbUserAdd = async ({
       })
 
     pool.close()
+    let [student] = result.recordset
 
     let nowRole;
+    console.log('student: ', student);
+
     try {
-      nowRole = await checkLeader(student[0].dataValues.oneCcode);
+      nowRole = await checkLeader(student.oneCcode);
       console.log('nowRole: ', nowRole);
     } catch (e) {
       reject(new Error('checkLeaderError'))
@@ -79,7 +82,6 @@ const dbUserAdd = async ({
     // берём только 1-ую запись
     // по идее в таком запросе для каждого должна
     // возвращаться 1 запись (так и есть, но вдруг косяк какой)
-    let [student] = result.recordset
     // добавить ещё id, т.к. users - students 1 to 1
     student.id = addId
     const userRole = {
@@ -95,14 +97,16 @@ const dbUserAdd = async ({
       User_roles.create(userRole)
     ])
 
+
     return new Promise((resolve) => {
       resolve({
         ...addStudent.dataValues,
-        role: nowRole ? 'Leader' : 'Student',
+        role: nowRole.length === 0 ? 'Leader' : 'Student',
         username,
         token
       })
     })
+
   }
 }
 
@@ -148,9 +152,11 @@ const dbUserCheck = async ({
           }
         })
       ])
-      
+
       let nowRole;
       try {
+
+        console.log('student[0].dataValues.oneCcode: ', student[0].dataValues.oneCcode);
         nowRole = await checkLeader(student[0].dataValues.oneCcode);
         console.log('nowRole: ', nowRole);
       } catch (e) {
@@ -160,7 +166,7 @@ const dbUserCheck = async ({
       return new Promise((resolve) => {
         const user = toAuthJSON({
           ...student[0].dataValues,
-          role: nowRole.recordset.length ? 'Leader' : 'Student', // тащить из базы, искать все
+          role: nowRole.length === 0 ? 'Leader' : 'Student', // тащить из базы, искать все
           token,
           username
         })
@@ -180,22 +186,22 @@ const dbUserCheck = async ({
       }
     })
 
+
     let nowRole;
     try {
-      console.log('student[0].dataValues.oneCcode: ', student[0].dataValues.oneCcode);
+      console.log('student[0].dataValues.oneCcode: ', student);
       nowRole = await checkLeader(student[0].dataValues.oneCcode);
-
-      console.log('nowRole: ', nowRole);
-
     } catch (e) {
-      reject(new Error('checkLeaderError'))
+      console.log('e: ', e);
+      //reject(new Error('checkLeaderError'))
     }
+
 
     return new Promise((resolve) => {
 
       const user = {
         ...student[0].dataValues,
-        role: nowRole.recordset.length ? 'Leader' : 'Student', // тащить из базы, искать все
+        role: nowRole.recordset.length != 0 ? 'Leader' : 'Student', // тащить из базы, искать все
         token,
         username
       }
