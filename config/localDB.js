@@ -4,10 +4,7 @@ const bcrypt = require('bcryptjs')
 const Users = require('../models/users')
 const Students = require('../models/students')
 const User_roles = require('../models/user_roles')
-const {
-  generateRefreshJWT,
-  toAuthJSON
-} = require('./jwt')
+const { generateRefreshJWT, toAuthJSON } = require('./jwt')
 
 /**
  * Save user info to local db
@@ -15,11 +12,7 @@ const {
  * @param {String} password
  * @param {Object} user
  */
-const dbUserAdd = async ({
-  username,
-  password,
-  user
-}) => {
+const dbUserAdd = async ({ username, password, user }) => {
   const hash = setPassword(password)
   const token = generateRefreshJWT()
 
@@ -35,9 +28,11 @@ const dbUserAdd = async ({
   // лезем в базу 1С и ищем инфу
   if (user.role === 'Students') {
     const connection = await pool.connect()
-    const result = await connection.request()
+    const result = await connection
+      .request()
       .input('code', sql.NChar, user.oneCcode)
-      .query(`
+      .query(
+        `
         Select [Код] as [oneCcode]
         ,[Полное_Имя] as [fio]
         ,[Имя] as [name]
@@ -59,24 +54,20 @@ const dbUserAdd = async ({
         FROM [UniversityPROF].[dbo].[су_ИнформацияОСтудентах]
       where Код = RIGHT('0000' + @code, 9) and [Статус] = 'Является студентом'
       order by Учебный_Год desc
-        `)
+        `
+      )
       .catch(err => {
-        return new Promise((resolve, reject) => {
-          reject(err)
-        })
+        throw new Error(err)
       })
 
     pool.close()
     let [student] = result.recordset
 
-    let nowRole;
-    console.log('student: ', student);
-
+    let nowRole
     try {
-      nowRole = await checkLeader(student.oneCcode);
-      console.log('nowRole: ', nowRole);
+      nowRole = await checkLeader(student.oneCcode)
     } catch (e) {
-      reject(new Error('checkLeaderError'))
+      throw new Error('checkLeaderError')
     }
 
     // берём только 1-ую запись
@@ -97,23 +88,16 @@ const dbUserAdd = async ({
       User_roles.create(userRole)
     ])
 
-
-    return new Promise((resolve) => {
-      resolve({
-        ...addStudent.dataValues,
-        role: nowRole.length === 0 ? 'Leader' : 'Student',
-        username,
-        token
-      })
-    })
-
+    return {
+      ...addStudent.dataValues,
+      role: nowRole.length === 0 ? 'Leader' : 'Student',
+      username,
+      token
+    }
   }
 }
 
-const dbUserCheck = async ({
-  username,
-  password
-}) => {
+const dbUserCheck = async ({ username, password }) => {
   const users = await Users.findAll({
     attributes: ['id', 'username', 'hash', 'token'],
     where: {
@@ -122,15 +106,11 @@ const dbUserCheck = async ({
   })
 
   if (users.length !== 0) {
-    const {
-      hash
-    } = users[0]
+    const { hash } = users[0]
     const hashPassword = await bcrypt.compare(password, hash)
 
     if (!hashPassword) {
-      return new Promise((resolve) => {
-        resolve(false)
-      })
+      return false
     }
 
     if (users[0].token === '' || users[0].token === null) {
@@ -144,26 +124,26 @@ const dbUserCheck = async ({
             id: users[0].id
           }
         }),
-        Users.update({
-          token
-        }, {
-          where: {
-            id: users[0].id
+        Users.update(
+          {
+            token
+          },
+          {
+            where: {
+              id: users[0].id
+            }
           }
-        })
+        )
       ])
 
-      let nowRole;
+      let nowRole
       try {
-
-        console.log('student[0].dataValues.oneCcode: ', student[0].dataValues.oneCcode);
-        nowRole = await checkLeader(student[0].dataValues.oneCcode);
-        console.log('nowRole: ', nowRole);
+        nowRole = await checkLeader(student[0].dataValues.oneCcode)
       } catch (e) {
         reject(new Error('checkLeaderError'))
       }
 
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const user = toAuthJSON({
           ...student[0].dataValues,
           role: nowRole.length === 0 ? 'Leader' : 'Student', // тащить из базы, искать все
@@ -175,42 +155,31 @@ const dbUserCheck = async ({
       })
     }
 
-    const {
-      token
-    } = users[0]
+    const { token } = users[0]
 
-    const student = await Students.findAll({
+    const [student] = await Students.findAll({
       attributes: ['id', 'fio', 'oneCcode', 'group'],
       where: {
         id: users[0].id
       }
     })
 
+    const nowRole = student
+      ? await checkLeader(student.dataValues.oneCcode)
+      : undefined
 
-    let nowRole;
-    try {
-      console.log('student[0].dataValues.oneCcode: ', student);
-      nowRole = await checkLeader(student[0].dataValues.oneCcode);
-    } catch (e) {
-      console.log('e: ', e);
-      //reject(new Error('checkLeaderError'))
+    return {
+      ...student.dataValues,
+      role: !nowRole
+        ? 'Teacher'
+        : nowRole.recordset.length != 0
+        ? 'Leader'
+        : 'Student', // тащить из базы, искать все
+      token,
+      username
     }
-
-
-    return new Promise((resolve) => {
-
-      const user = {
-        ...student[0].dataValues,
-        role: nowRole.recordset.length != 0 ? 'Leader' : 'Student', // тащить из базы, искать все
-        token,
-        username
-      }
-      resolve(user)
-    })
   } else {
-    return new Promise((resolve) => {
-      resolve()
-    })
+    return
   }
 }
 
@@ -221,26 +190,27 @@ function setPassword(password) {
   return hash
 }
 
-const checkLeader = async (oneCcode) => {
+const checkLeader = async oneCcode => {
   try {
     const connection = await pool.connect()
-    const result = await connection.request()
+    const result = await connection
+      .request()
       .input('code', sql.NChar, oneCcode)
-      .query(`
+      .query(
+        `
           Select t2.Ссылка, t2.Код
           From [UniversityPROF].[dbo].СтаростыГрупп as t1
           left Join [UniversityPROF].[dbo].[Справочник_ФизическиеЛица] as t2 on t2.Ссылка = t1.ФизическоеЛицо_Ссылка
           Where Период like '4019%' and t2.Код = @code
-            `)
+            `
+      )
       .catch(err => {
-        return new Promise((resolve, reject) => {
-          reject(err)
-        })
+        throw new Error(err)
       })
     pool.close()
     return result
   } catch (e) {
-    console.log('e: ', e);
+    console.log('e: ', e)
     return e
   }
 }
