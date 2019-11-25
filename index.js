@@ -22,7 +22,7 @@ if (!isProduction) {
   app.use(errorhandler())
 }
 
-require('./config/passport')
+require('./lib/passport')
 app.use(require('./routes'))
 
 app.use((req, res, next) => {
