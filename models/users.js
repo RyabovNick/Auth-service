@@ -20,6 +20,9 @@ Users.init(
     },
     last_check: {
       type: Sequelize.DATE
+    },
+    information: {
+      type: Sequelize.JSON
     }
   },
   {

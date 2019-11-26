@@ -8,8 +8,8 @@ const database = process.env.DB_DATABASE
 
 const sequelize = new Sequelize(database, user, password, {
   dialect: 'mariadb',
-  host: host,
-  port: port,
+  host,
+  port,
   logging: false,
   define: {
     underscored: false,

@@ -36,24 +36,26 @@ if (!isProduction) {
   app.use((err, req, res, next) => {
     console.log(err.stack)
 
-    res.status(err.status || 500)
+    const status = err.status || 500
+
+    res.status(status)
 
     res.json({
       errors: {
         message: err.message,
+        status,
         error: err
       }
     })
   })
 } else {
-  // production error handler
-  // no stacktraces leaked to user
   app.use(function(err, req, res, next) {
-    res.status(err.status || 500)
+    const status = err.status || 500
+    res.status(status)
     res.json({
       errors: {
         message: err.message,
-        error: {}
+        status
       }
     })
   })
